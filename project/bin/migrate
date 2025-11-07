@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+require 'pathname'
+require 'fileutils'
+include FileUtils
+
+# path to your application root.
+APP_ROOT = Pathname.new File.expand_path('../../', __FILE__)
+
+def system!(*args)
+  system(*args) || abort("\n== Command #{args} failed ==")
+end
+
+chdir APP_ROOT do
+  system! 'ridgepole -c config/database.yml --apply --dry-run -f schema/Schemafile'
+
+  puts '------------'
+  puts 'apply? [y/n]'
+  puts '------------'
+
+  case gets.chomp
+  when 'yes', 'YES', 'y'
+    system! 'bin/rails db:migrate'
+    system! 'bundle exec annotate'
+  when 'no', 'NO', 'n'
+    exit 1
+  else
+    exit 1
+  end
+end

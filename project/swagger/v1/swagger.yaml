@@ -1,0 +1,460 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+- bearerAuth: []
+paths:
+  "/api/v1/articles":
+    get:
+      summary: Retrieve all articles
+      tags:
+      - Articles
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: articles found
+        '404':
+          description: articles not found
+    post:
+      summary: Create a new article
+      tags:
+      - Articles
+      security:
+      - bearerAuth: []
+      parameters: []
+      responses:
+        '201':
+          description: article created
+        '422':
+          description: validation failed
+        '400':
+          description: transaction failed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+              required:
+              - title
+              - content
+  "/api/v1/articles/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Retrieve a specific article
+      tags:
+      - Articles
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: article found
+        '404':
+          description: article not found
+    put:
+      summary: Update an article
+      tags:
+      - Articles
+      security:
+      - bearerAuth: []
+      parameters: []
+      responses:
+        '201':
+          description: article updated
+        '422':
+          description: update validation failed
+        '400':
+          description: transaction failed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+              required:
+              - title
+              - content
+    delete:
+      summary: Delete an article
+      tags:
+      - Articles
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: article deleted
+        '400':
+          description: deletion failed
+  "/oauth/token":
+    post:
+      summary: Get access token using password grant
+      tags:
+      - OAuth
+      parameters: []
+      responses:
+        '200':
+          description: token granted
+        '400':
+          description: invalid credentials
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+              - grant_type
+              - client_id
+              - client_secret
+              - username
+              - password
+              - scope
+              properties:
+                grant_type:
+                  type: string
+                  example: password
+                client_id:
+                  type: string
+                  example: p5BpMO9iH3uYkjXSqsKetJqu2v3xyriwmkLX9OXoC7o
+                client_secret:
+                  type: string
+                  example: T-6-4soSgN7H6fNCl0Cb6wcm0-bn3MATM32UWGXlCTM
+                username:
+                  type: string
+                  example: admin@example.com
+                password:
+                  type: string
+                  example: password123
+                scope:
+                  type: string
+                  example: read write
+  "/api/v1/permissions":
+    get:
+      summary: Retrieve all permissions
+      tags:
+      - Permissions
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: search_text
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: permissions found
+        '404':
+          description: permissions not found
+    post:
+      summary: Create a new permission
+      tags:
+      - Permissions
+      security:
+      - bearerAuth: []
+      parameters: []
+      responses:
+        '201':
+          description: permission created
+        '422':
+          description: validation failed
+        '400':
+          description: transaction failed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                action:
+                  type: string
+              required:
+              - name
+              - action
+  "/api/v1/permissions/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Retrieve a permission by ID
+      tags:
+      - Permissions
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: permission found
+        '404':
+          description: permission not found
+    put:
+      summary: Update a permission
+      tags:
+      - Permissions
+      security:
+      - bearerAuth: []
+      parameters: []
+      responses:
+        '201':
+          description: permission updated
+        '422':
+          description: update failed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                action:
+                  type: string
+              required:
+              - name
+              - action
+    delete:
+      summary: Delete a permission
+      tags:
+      - Permissions
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: permission deleted
+        '400':
+          description: deletion failed
+  "/api/v1/roles":
+    get:
+      summary: Retrieve all roles
+      tags:
+      - Roles
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: search_text
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: roles found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      roles:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            name:
+                              type: string
+                          required:
+                          - id
+                          - name
+        '404':
+          description: roles not found
+    post:
+      summary: Create a new role
+      tags:
+      - Roles
+      security:
+      - bearerAuth: []
+      parameters: []
+      responses:
+        '201':
+          description: role created
+        '422':
+          description: invalid role data
+        '400':
+          description: transaction failed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
+  "/api/v1/roles/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Retrieve a role by ID
+      tags:
+      - Roles
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: role found
+        '404':
+          description: role not found
+        '500':
+          description: internal error
+    delete:
+      summary: Delete a role
+      tags:
+      - Roles
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: role deleted
+        '404':
+          description: role not found
+        '400':
+          description: role deletion failed
+  "/api/v1/users":
+    get:
+      summary: Retrieve all users
+      security:
+      - bearerAuth: []
+      tags:
+      - Users
+      parameters:
+      - name: search_text
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: users found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      users:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            name:
+                              type: string
+                            email:
+                              type: string
+                          required:
+                          - id
+                          - name
+                          - email
+        '404':
+          description: no users found
+    post:
+      summary: Create a new user
+      security:
+      - bearerAuth: []
+      tags:
+      - Users
+      parameters: []
+      responses:
+        '201':
+          description: user created
+        '422':
+          description: validation error
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                password_confirmation:
+                  type: string
+              required:
+              - email
+              - password
+              - password_confirmation
+  "/api/v1/users/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Get user by ID
+      tags:
+      - Users
+      responses:
+        '200':
+          description: user found
+        '500':
+          description: user not found
+    delete:
+      summary: Delete user
+      tags:
+      - Users
+      responses:
+        '204':
+          description: user deleted
+        '500':
+          description: user not found or delete failed
+servers:
+- url: http://localhost:3000

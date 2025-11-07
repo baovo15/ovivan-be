@@ -1,0 +1,49 @@
+version: '3.8'
+services:
+  # postgres Service
+  postgres:
+    image: postgres:15.3
+    environment:
+      POSTGRES_DB: ovivan_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: userpassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - ovivan-net
+  redis:
+    image: redis:7.4
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ovivan-net
+
+  # Ruby on Rails App Service
+  app:
+    build: project
+    env_file:
+      - project/.env
+    volumes:
+      - ./project:/app
+    working_dir: /app
+    command: ./bin/start.sh
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - ovivan-net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  ovivan-net:
+    driver: bridge

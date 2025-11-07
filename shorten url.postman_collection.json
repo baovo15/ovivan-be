@@ -1,0 +1,72 @@
+{
+	"info": {
+		"_postman_id": "d882d6e6-d320-462f-89ea-ffdbf6383dd1",
+		"name": "shorten url",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "35146047"
+	},
+	"item": [
+		{
+			"name": "encode",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \n    \"url\": \"http://localhost:3000/AbC123x111yq11weqwe232\" \n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://ovivan.duybaovn.site/v1/urls/encode",
+					"protocol": "https",
+					"host": [
+						"ovivan",
+						"duybaovn",
+						"site"
+					],
+					"path": [
+						"v1",
+						"urls",
+						"encode"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "decode",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://ovivan.duybaovn.site/8JAt5OUd\" \n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://ovivan.duybaovn.site/v1/urls/decode",
+					"protocol": "https",
+					"host": [
+						"ovivan",
+						"duybaovn",
+						"site"
+					],
+					"path": [
+						"v1",
+						"urls",
+						"decode"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

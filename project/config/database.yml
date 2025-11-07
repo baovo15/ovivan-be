@@ -1,0 +1,22 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: your_pg_user
+  password: your_pg_password
+  host: localhost
+
+development:
+  <<: *default
+  database: my_app_development
+
+production:
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>
+  database: ovivan_db
+
+test:
+  adapter: sqlite3
+  database: db/test.sqlite3
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  timeout: 5000

@@ -1,0 +1,141 @@
+def AGENT_LABEL	     // use for seleting NODE
+def TAG_VERSION	     // use TAG_VERSION if the tag name is available
+
+if (BRANCH_NAME == "prod") {
+    echo "Service in branch PROD can not build. Please build service with tag."
+    currentBuild.result = 'SUCCESS'
+    return
+} else {
+    try {
+        TAG_VERSION = TAG_NAME    // for PROD build
+    }
+    catch (error) {
+        AGENT_LABEL = "demo"
+    }
+}
+
+if ( TAG_VERSION != null ) {
+    AGENT_LABEL = "release"
+} else {
+    AGENT_LABEL = "demo"
+}
+
+pipeline {
+    agent {
+        node {
+            label AGENT_LABEL
+        }
+    }
+    options {
+        disableConcurrentBuilds()   // Disable multitask build
+        buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '10', numToKeepStr: '10'))
+        skipStagesAfterUnstable()
+    }
+    environment {
+        APP_NAME = "ovivan-be"   // must input application name
+        GITHASH = "${sh(script: 'git rev-parse HEAD | head -c 8', returnStdout: true).trim()}"
+        REPLICAS = "1"
+        REPOSITORY_NAME = "${ECR_REGISTRY}/${APP_NAME}"
+        ENVIRONMENT_DEPLOY = "${ TAG_VERSION == null ? "${env.BRANCH_NAME}" : "prod" }"
+        FILE_DEPLOYMENT =  "bagi-repo/${ENVIRONMENT_DEPLOY}/$APP_NAME/values.yaml"
+        REPOSITORY_NAME_TAG = "${ ENVIRONMENT_DEPLOY == "prod" ? "${ENVIRONMENT_DEPLOY}_${TAG_VERSION}_${env.BUILD_NUMBER}" : "${env.BRANCH_NAME}_v${GITHASH}_${env.BUILD_NUMBER}"}"
+        NAMESPACE = "obis-${ENVIRONMENT_DEPLOY}"
+    }
+    stages {
+        stage('Pre-Build') {
+            steps {
+                script {
+                    echo 'Building..'
+                    echo 'install dependencies and tools'
+                    if ( ENVIRONMENT_DEPLOY != "prod" ) {
+                        try {
+                            sh'''
+                                sudo tar -xf /opt/${HELM_CHART}/*.tgz
+                                helm package --app-version "$REPOSITORY_NAME_TAG" ${HELM_CHART}
+                                sudo rm -rf ${HELM_CHART}
+                            '''
+                        }
+                        catch (error) {
+                        }
+                    } else {
+                        try {
+                            sh'''
+                                sudo tar -xf /opt/${HELM_CHART}-${ENVIRONMENT_DEPLOY}/*.tgz
+                                helm package --app-version "$REPOSITORY_NAME_TAG" ${HELM_CHART}
+                                sudo rm -rf ${HELM_CHART}
+                            '''
+                        }
+                        catch (error) {
+                        }
+                    }
+                    dir('bagi-repo'){
+                        try {
+                            git branch: "$BAGI_REPO_BRANCH",
+                            credentialsId: "$BAGI_REPO_CREDGIT",
+                            url: "$BAGI_REPO_URL",
+                            changelog: false
+                        }  
+                        catch (error) {
+                        }
+                    }
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Testing..'
+            }
+        }
+        stage('Build') {
+            steps {
+                script {
+                    sh '''
+                        cp -f bagi-repo/${ENVIRONMENT_DEPLOY}/$APP_NAME/development.rb project/config/environments/development.rb
+                        cp -f bagi-repo/${ENVIRONMENT_DEPLOY}/$APP_NAME/production.rb project/config/environments/production.rb
+                    '''
+                    dir("${env.WORKSPACE}/project"){
+                        sh '''
+                            docker build -t "$APP_NAME":"$REPOSITORY_NAME_TAG" .
+                            docker tag "$APP_NAME":"$REPOSITORY_NAME_TAG" "$REPOSITORY_NAME":"$REPOSITORY_NAME_TAG"
+                            docker push "$REPOSITORY_NAME":"$REPOSITORY_NAME_TAG"
+                            docker rmi "$APP_NAME":"$REPOSITORY_NAME_TAG"
+                        '''
+                    }
+                }
+            }
+        }
+		stage('Deploy') {
+			steps {
+                script{
+                    if ( ENVIRONMENT_DEPLOY != "prod" ) {
+                        sh 'sed -i -e "s|envs|$ENVIRONMENT_DEPLOY|g" -e "s|repositoryName|$REPOSITORY_NAME|g" -e "s|repositoryTag|"$REPOSITORY_NAME_TAG"|g" -e "s|replicas|"$REPLICAS"|g" $FILE_DEPLOYMENT'
+                        if (ENVIRONMENT_DEPLOY == "dev" ) {
+                            sh '''
+                                helm upgrade --install $APP_NAME ${HELM_CHART}*.tgz -f "$FILE_DEPLOYMENT" --namespace obis
+                            '''
+                        } else {
+                            sh '''
+                                helm upgrade --install $APP_NAME ${HELM_CHART}*.tgz -f "$FILE_DEPLOYMENT" --namespace obis-uat
+                            '''
+                        }
+                    } else {
+                        sh 'echo "Service in Production environment cannot automation deploy. Please manual deploy."'
+                        def userInput = input(id: 'userInput', message: 'Do you want to deploy to Production?', submitter: 'admin', parameters:[choice(choices: ['Yes', 'No'], description: 'Please select an option below', name: 'User Input')])
+                        if (userInput == 'Yes') {
+                            echo "You selected '${userInput}' in the Input Request step"
+                            sh'''
+                                sed -i -e "s|envs|"$ENVIRONMENT_DEPLOY"|g" -e "s|repositoryName|$REPOSITORY_NAME|g" -e "s|repositoryTag|"$REPOSITORY_NAME_TAG"|g" -e "s|replicas|"$REPLICAS"|g" $FILE_DEPLOYMENT
+                                helm upgrade --install $APP_NAME ${HELM_CHART}*.tgz -f "$FILE_DEPLOYMENT" --namespace "$NAMESPACE" --kubeconfig $KUBE_DEFAULT_CONFIG_PATH$ENVIRONMENT_DEPLOY
+                            '''
+                        }
+                        else {
+                            echo "You selected '${userInput}' in the Input Request step"
+                            sh 'echo "The service was built but not deploy to Production."'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

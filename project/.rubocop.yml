@@ -1,0 +1,28 @@
+inherit_from: .rubocop_todo.yml
+require: rubocop-rails
+
+# Omakase Ruby styling for Rails
+inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+
+
+AllCops:
+  TargetRubyVersion: 3.3.1
+  Exclude:
+    - 'db/schema.rb'
+    - 'vendor/**/*'
+
+Layout/LineLength:
+  Max: 160
+
+Metrics/MethodLength:
+  Max: 15
+  Exclude:
+    - "db/migrate/20250310085622_create_doorkeeper_tables.rb"
+
+Rails/ReversibleMigration:
+  Exclude:
+    - "db/migrate/20250310085622_create_doorkeeper_tables.rb"
+
+Rails:
+  Enabled: true
+
