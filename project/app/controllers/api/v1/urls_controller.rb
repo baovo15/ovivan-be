@@ -32,7 +32,7 @@ module Api
 
         @presenter = short_url_presenter
 
-        if @presenter.short_url.present?
+        if @presenter.present? && @presenter.short_url.present?
           Rails.logger.info log_prefix("decode", "success",
                                        code: @form.extract_code,
                                        original_url: @presenter.short_url.original_url)
