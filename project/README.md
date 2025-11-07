@@ -352,11 +352,6 @@ curl -X POST http://localhost:3000/api/v1/urls/decode \
 
 # => { "original_url": "https://codesubmit.io/library/react" }
 
-# Decode with raw code
-curl -X POST http://localhost:3000/api/v1/urls/decode \
-  -d "url=GeAi9K"
-
-# => { "original_url": "https://codesubmit.io/library/react" }
 ```
 
 ```
